@@ -1,0 +1,42 @@
+# Agent Manifest — AgentRegistry entry point
+# AgentRegistry (mediator/registry/agent_registry.py) reads every key below at
+# ROOT level — do NOT nest keys under an `agent:` block. That nested shape is
+# invisible to the registry (falls back to defaults / KeyErrors); see the
+# framework's manifest schema documentation for the full contract.
+id: "GOV-C2-013"
+name: "Citizen Application Processing & Status Notification Agent"
+namespace: "gov"
+version: "0.1.0"
+enabled: true
+category: "Cat 2"
+# Static generation contract. WorkloadReportNode resolves an Azure OpenAI
+# client per invocation from the three secrets declared below (see
+# WorkloadReportNode._resolve_llm in src/nodes/post_process_node.py). Any
+# resolution/completion failure (missing secret, API error, empty response)
+# degrades silently back to the deterministic narrative — this node never
+# raises and never sets status=error solely because the LLM was unreachable.
+# See docs/07_operation_guide.md.
+generation_mode: "llm"
+industry: "GOV"
+
+# Opaque compatibility metadata. It is not an inheritance selector or gate input.
+base_type: "AgentBaseGraph"
+
+# Entry point — single dotted import path (module.Class), NOT split module:/class:.
+# AgentRegistry does `manifest["class"].rsplit(".", 1)` to get (module, class_name).
+class: "src.graph.graph.CitizenApplicationProcessingAgent"
+
+# Security
+required_trust_level: "VERIFIED_EXTERNAL"
+
+# Compile-time gates (AgentRegistry._compile_and_cache) — declare every secret/extra
+# actually used, or the agent loads with those checks silently disabled.
+# AZURE_OPENAI_ENDPOINT/AZURE_OPENAI_DEPLOYMENT are not credentials by themselves
+# but are kept in the same secrets list so all three provision/rotate together.
+requires:
+  secrets: ["AZURE_OPENAI_API_KEY", "AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_DEPLOYMENT"]
+  extras: ["openai"]  # AzureOpenAIClient wraps langchain_openai.ChatOpenAI
+
+# generation_mode is deployment identity, not a tunable provider setting. Runtime
+# parameters (hitl, memory_enabled, ...) live in config/config.yaml — AgentRegistry
+# loads that file separately and passes it as Graph(config=...). Do NOT put them here.

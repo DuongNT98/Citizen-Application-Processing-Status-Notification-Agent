@@ -1,0 +1,15 @@
+# Runtime parameters — loaded by AgentRegistry, passed as Graph(config=...).
+# This is a SEPARATE file from config/agent.yaml (the static manifest): agent.yaml
+# is AgentRegistry's discovery entry point, this file is the agent's own runtime
+# config, keyed by whatever your Graph/node code reads via self.config.get(...).
+# See the framework's manifest schema documentation for the agent.yaml /
+# config.yaml split of responsibility.
+
+# No HITL in this template (src/graph/graph.py: propagate_hitl = False) and no
+# checkpointer-backed memory — omitting hitl/memory_enabled keeps
+# BaseGraph.compile() checkpointer-free, matching the inner subgraph's linear,
+# non-interrupting pipeline.
+
+# llm: intentionally not set here. WorkloadReportNode resolves its own Azure
+# OpenAI client per invocation from the secrets declared in config/agent.yaml
+# (requires.secrets) — see src/nodes/post_process_node.py._resolve_llm().

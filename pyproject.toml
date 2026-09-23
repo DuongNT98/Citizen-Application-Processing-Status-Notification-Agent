@@ -1,0 +1,48 @@
+[project]
+name = "gov-c2-013"
+version = "0.1.0"
+description = "Citizen Application Processing & Status Notification Agent — AgentCore Template"
+requires-python = ">=3.11"
+# The framework (agenticstar-agentcore) is NOT a public-PyPI dependency; it is
+# provided by CI per repo arm — a local stub package on PYTHONPATH for
+# older-era repos, or installed from the package registry for wheel-era repos
+# (see the dual-mode test job in the CI pipeline config). Pinning it here would
+# make `pip install -e .` fail because it is not resolvable from the default
+# index.
+dependencies = [
+    "agenticstar-agentcore[marketplace,openai]==1.0.3",]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==9.0.3",
+    "pytest-cov==5.0.0",
+    "pytest-asyncio==1.4.0",
+    "ruff==0.4.4",
+    "mypy==1.10.0",
+]
+
+[build-system]
+requires = ["setuptools==68.2.2"]
+build-backend = "setuptools.build_meta"
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+
+# The SDK (agenticstar-agentcore) ships no py.typed marker for framework/shared,
+# so every import from them resolves as untyped (Any) under strict mode - not a
+# template defect, a missing PEP 561 marker upstream (request:coe candidate).
+[[tool.mypy.overrides]]
+module = ["framework.*", "shared.*"]
+ignore_missing_imports = true
+
+# Every node/graph/state in this template inherits from a framework base class,
+# which is untyped (Any) for the same reason - strict's disallow_subclassing_any
+# has no real signal to give here without SDK-side stubs.
+[[tool.mypy.overrides]]
+module = "src.*"
+disallow_subclassing_any = false
